@@ -72,9 +72,10 @@ try {
   await client.connect(transport);
   const listed = await client.listTools();
   const names = listed.tools.map((tool) => tool.name);
-  assert.equal(names.length, 177); // 19/09: 0.10.x thêm cloud_app_*, cloud_base_*, domain reserve/claim, mail inbox
+  assert.equal(names.length, 180); // 19/09 tối: +cloud_domain_tld_groups, cloud_domain_tlds, cloud_domain_suggest (782 đuôi giá thật)
   for (const name of [
     'cloud_whoami', 'cloud_balance', 'cloud_topup', 'cloud_services',
+    'cloud_domain_tld_groups', 'cloud_domain_tlds', 'cloud_domain_suggest',
     'monapay_create_qr', 'monapay_create_webhook',
     'cloud_vps_create', 'cloud_db_create', 'cloud_job_status',
     'cloud_services_list', 'cloud_service_start', 'cloud_service_stop', 'cloud_service_rebuild',

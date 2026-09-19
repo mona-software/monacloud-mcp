@@ -56,6 +56,63 @@ export function registerDomainTools(server: McpServer, clients: CloudClients): v
     return results;
   }));
 
+  server.registerTool('cloud_domain_tld_groups', {
+    annotations: toolAnnotationsForName('cloud_domain_tld_groups'),
+    title: 'Danh mục đuôi tên miền theo ngành',
+    description: 'Liệt kê các nhóm ngành của đuôi tên miền (Ăn uống, Công nghệ & AI, Quốc gia, Việt Nam...) kèm số lượng đuôi và khoảng giá VND mỗi nhóm. Gọi tool này TRƯỚC cloud_domain_tlds để biết slug ngành cần lọc. Không cần đăng nhập.',
+    inputSchema: z.object({}).strict(),
+  }, () => runTool(() => clients.vibecloudGuestOk('/api/domains/tlds/groups')));
+
+  server.registerTool('cloud_domain_tlds', {
+    annotations: toolAnnotationsForName('cloud_domain_tlds'),
+    title: 'Bảng giá đuôi tên miền',
+    description: 'Bảng giá đầy đủ các đuôi tên miền MONA Domain bán được, giá VND đã gồm VAT — giá năm đầu (price_vnd, đã tính khuyến mãi nếu registry đang chạy) và giá gia hạn mỗi năm (renew_vnd). Lọc theo ngành (group, lấy slug từ cloud_domain_tld_groups), theo từ khoá (q), hoặc theo ngân sách (max_price_vnd). Dùng khi người dùng hỏi "có những đuôi nào", "đuôi nào rẻ", "đuôi nào hợp ngành X". Đuôi .vn có needs_verification=true nghĩa là cần hồ sơ xác thực chủ thể. Không cần đăng nhập.',
+    inputSchema: z.object({
+      scope: z.enum(['popular', 'all']).optional()
+        .describe('popular = nhóm đuôi thông dụng (mặc định), all = toàn bộ danh sách.'),
+      group: z.string().max(40).optional()
+        .describe('Slug ngành từ cloud_domain_tld_groups (vd: "an-uong", "cong-nghe", "viet-nam").'),
+      q: z.string().max(40).optional().describe('Tìm trong tên đuôi và nhãn tiếng Việt (vd: "shop").'),
+      max_price_vnd: z.number().int().min(0).optional().describe('Chỉ lấy đuôi có giá năm đầu không quá số này.'),
+      sort: z.enum(['popular', 'price', 'tld']).optional().describe('Thứ tự sắp xếp. Mặc định popular.'),
+      limit: z.number().int().min(1).max(1000).optional().describe('Số dòng tối đa. Mặc định 200.'),
+      offset: z.number().int().min(0).optional().describe('Bỏ qua bao nhiêu dòng đầu, để lật trang.'),
+    }).strict(),
+  }, ({ scope, group, q, max_price_vnd, sort, limit, offset }) => runTool(() => {
+    const params = new URLSearchParams();
+    if (scope) params.set('scope', scope);
+    if (group) params.set('group', group);
+    if (q) params.set('q', q);
+    if (max_price_vnd !== undefined) params.set('max_price_vnd', String(max_price_vnd));
+    if (sort) params.set('sort', sort);
+    if (limit !== undefined) params.set('limit', String(limit));
+    if (offset !== undefined) params.set('offset', String(offset));
+    const query = params.toString();
+    return clients.vibecloudGuestOk(`/api/domains/tlds${query ? `?${query}` : ''}`);
+  }));
+
+  server.registerTool('cloud_domain_suggest', {
+    annotations: toolAnnotationsForName('cloud_domain_suggest'),
+    title: 'Gợi ý tên miền còn trống',
+    description: 'Gợi ý những tên miền còn trống quanh một từ khoá, kèm giá VND đã gồm VAT. Từ khoá nhận tiếng Việt có dấu, tool tự bỏ dấu thành nhãn hợp lệ. Truyền industry (slug từ cloud_domain_tld_groups) để ưu tiên đuôi hợp ngành — vd quán cà phê sẽ ra .cafe và .coffee trước. Mọi kết quả đều đã tra trạng thái thật tại nhà đăng ký. Dùng khi tên người dùng muốn đã có người lấy, hoặc khi họ chưa nghĩ ra tên. Sau khi người dùng chọn thì gọi cloud_domain_buy (hoặc cloud_domain_reserve nếu chưa đăng nhập). Không cần đăng nhập.',
+    inputSchema: z.object({
+      keyword: z.string().min(1).max(63)
+        .describe('Tên muốn đặt hoặc từ khoá mô tả sản phẩm (vd: "Cà Phê Sạch", "myapp").'),
+      industry: z.string().max(40).optional()
+        .describe('Slug ngành từ cloud_domain_tld_groups để ưu tiên đuôi hợp ngành.'),
+      limit: z.number().int().min(1).max(30).optional().describe('Số gợi ý trả về. Mặc định 12.'),
+      max_price_vnd: z.number().int().min(0).optional().describe('Chặn trần giá năm đầu.'),
+      include_taken: z.boolean().optional().describe('true = giữ lại cả tên đã có người đăng ký.'),
+    }).strict(),
+  }, ({ keyword, industry, limit, max_price_vnd, include_taken }) => runTool(() => {
+    const params = new URLSearchParams({ keyword });
+    if (industry) params.set('industry', industry);
+    if (limit !== undefined) params.set('limit', String(limit));
+    if (max_price_vnd !== undefined) params.set('max_price_vnd', String(max_price_vnd));
+    if (include_taken) params.set('include_taken', 'true');
+    return clients.vibecloudGuestOk(`/api/domains/tlds/suggest?${params}`);
+  }));
+
   server.registerTool('cloud_domain_registrant_get', {
     annotations: toolAnnotationsForName('cloud_domain_registrant_get'),
     title: 'Xem thông tin chủ thể đăng ký tên miền',

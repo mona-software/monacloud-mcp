@@ -24,7 +24,7 @@ export type ToolAnnotations = {
 
 // cloud_subscription_update có thể huỷ gia hạn / dừng máy (cancel_action=stop) → xếp destructive để agent hỏi lại trước khi gọi.
 const DESTRUCTIVE = /(?:^|_)(?:delete|remove|cancel|release|rotate|stop|destroy|reset|revoke|suspend)(?:_|$)|^cloud_subscription_update$/;
-const READ_ONLY = /(?:^|_)(?:list|get|status|search|balance|ledger|health|whoami|usage|services|quote|detect|wait|logs|stats|templates|tlds|prices|packages)(?:_|$)/;
+const READ_ONLY = /(?:^|_)(?:list|get|status|search|balance|ledger|health|whoami|usage|services|quote|detect|wait|logs|stats|templates|tlds|prices|packages|suggest|groups)(?:_|$)/;
 const IDEMPOTENT_WRITE = /(?:^|_)(?:set|update|attach)(?:_|$)/;
 
 /** Mechanical metadata shared by native tools and tools imported from monapay-mcp. */
