@@ -488,6 +488,18 @@
       "description": "Kiểm tra tên miền còn trống và xem giá mua (VND, đã VAT). KHÔNG cần đăng nhập MONA Pass — gọi được ngay cả khi người dùng chưa có tài khoản; dùng trước khi mua/giữ chỗ để biết available/price."
     },
     {
+      "name": "cloud_domain_tld_groups",
+      "description": "Liệt kê các nhóm ngành của đuôi tên miền (Ăn uống, Công nghệ & AI, Quốc gia, Việt Nam...) kèm số lượng đuôi và khoảng giá VND mỗi nhóm. Gọi tool này TRƯỚC cloud_domain_tlds để biết slug ngành cần lọc. Không cần đăng nhập."
+    },
+    {
+      "name": "cloud_domain_tlds",
+      "description": "Bảng giá đầy đủ các đuôi tên miền MONA Domain bán được, giá VND đã gồm VAT — giá năm đầu (price_vnd, đã tính khuyến mãi nếu registry đang chạy) và giá gia hạn mỗi năm (renew_vnd). Lọc theo ngành (group, lấy slug từ cloud_domain_tld_groups), theo từ khoá (q), hoặc theo ngân sách (max_price_vnd). Dùng khi người dùng hỏi \"có những đuôi nào\", \"đuôi nào rẻ\", \"đuôi nào hợp ngành X\". Đuôi .vn có needs_verification=true nghĩa là cần hồ sơ xác thực chủ thể. Không cần đăng nhập."
+    },
+    {
+      "name": "cloud_domain_suggest",
+      "description": "Gợi ý những tên miền còn trống quanh một từ khoá, kèm giá VND đã gồm VAT. Từ khoá nhận tiếng Việt có dấu, tool tự bỏ dấu thành nhãn hợp lệ. Truyền industry (slug từ cloud_domain_tld_groups) để ưu tiên đuôi hợp ngành — vd quán cà phê sẽ ra .cafe và .coffee trước. Mọi kết quả đều đã tra trạng thái thật tại nhà đăng ký. Dùng khi tên người dùng muốn đã có người lấy, hoặc khi họ chưa nghĩ ra tên. Sau khi người dùng chọn thì gọi cloud_domain_buy (hoặc cloud_domain_reserve nếu chưa đăng nhập). Không cầ"
+    },
+    {
       "name": "cloud_domain_registrant_get",
       "description": "Lấy thông tin chủ thể (registrant) đã lưu. Cần dữ liệu này để mua tên miền."
     },
