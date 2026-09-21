@@ -2,7 +2,7 @@
 
 Portal: https://claude.ai/admin-settings/directory/submissions/new — **cần tài khoản Claude Team/Enterprise, vai Owner**. Cá nhân không có mục này. Tài liệu: https://claude.com/docs/connectors/building/submission
 
-Điều kiện kỹ thuật đã đạt (19/09/2026): server HTTPS `https://mcp.monacloud.vn/mcp` (Streamable HTTP) · OAuth 2.0 + PKCE + Dynamic Client Registration (`/.well-known/oauth-authorization-server`, `/register`) · 177 tool đều có `title` + `readOnlyHint`/`destructiveHint` (monacloud-mcp ≥ 0.10.11) · chính sách quyền riêng tư https://monacloud.vn/chinh-sach-quyen-rieng-tu (EN: https://monacloud.vn/en/privacy) · Smithery đã quét thành công (177 tool, 3 prompt, 2 resource).
+Điều kiện kỹ thuật đã đạt (cập nhật 21/09/2026): server HTTPS `https://mcp.monacloud.vn/mcp` (Streamable HTTP) · OAuth 2.0 + PKCE + Dynamic Client Registration (`/.well-known/oauth-authorization-server`, `/register`) · 180 tool đều có `title` + `readOnlyHint`/`destructiveHint` (monacloud-mcp ≥ 0.10.12) · chính sách quyền riêng tư https://monacloud.vn/chinh-sach-quyen-rieng-tu (EN: https://monacloud.vn/en/privacy) · Smithery đã quét thành công 180 tool (thẻ tự cập nhật đủ 180 sau 24h, 3 prompt, 2 resource).
 
 ## 2. Connection
 - Server URL: `https://mcp.monacloud.vn/mcp` · Transport: Streamable HTTP · Universal URL (một URL cho mọi người dùng).
