@@ -7,6 +7,7 @@ import express from "express";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { ProxyOAuthServerProvider } from "@modelcontextprotocol/sdk/server/auth/providers/proxyProvider.js";
 import { mcpAuthRouter } from "@modelcontextprotocol/sdk/server/auth/router.js";
+import { InvalidClientMetadataError } from "@modelcontextprotocol/sdk/server/auth/errors.js";
 import { createServer as createMcpServer, PKG_VERSION } from "./server.js";
 import { createAccessTokenVerifier, type VerifiedAccessToken } from "./remote-verify.js";
 
@@ -152,7 +153,14 @@ export async function createRemoteServer(options: RemoteServerOptions): Promise<
     const wanted = (client.redirect_uris as string[] | undefined) || [];
     const rejected = wanted.filter((uri) => !redirectAllowed(uri));
     if (!wanted.length || rejected.length) {
-      throw new Error(`invalid_redirect_uri: chỉ nhận redirect_uri thuộc ${REDIRECT_ALLOW_HOSTS.join(", ")} (từ chối: ${rejected.join(", ") || "rỗng"})`);
+      // PHẢI là OAuthError thì SDK mới trả 400 kèm mã lỗi; `new Error` thường bị quy thành
+      // 500 server_error, khiến client thật tưởng máy chủ hỏng và cứ thử lại thay vì sửa redirect_uri.
+      const why = rejected.length
+        ? `redirect_uri không được phép: ${rejected.join(", ")}`
+        : "thiếu redirect_uris";
+      throw new InvalidClientMetadataError(
+        `${why}. Chỉ nhận https thuộc ${REDIRECT_ALLOW_HOSTS.join(", ")} (localhost cho phép http).`,
+      );
     }
     const upstream = await fetchImpl(registrationUrl, {
       method: "POST",

@@ -49,7 +49,11 @@ async function appFetchFor(app, input, init = {}) {
       const responseBody = Buffer.concat(chunks);
       resolve(new Response(responseBody, {
         status: res.statusCode,
-        statusText: res.statusCode >= 400 ? responseBody.toString("utf8").slice(0, 200) : undefined,
+        // statusText chỉ nhận latin-1; thông điệp lỗi tiếng Việt có dấu sẽ làm Response ném lỗi,
+        // nên bỏ ký tự ngoài ASCII. Thân phản hồi đầy đủ vẫn đọc được bằng response.json().
+        statusText: res.statusCode >= 400
+          ? responseBody.toString("utf8").replace(/[^\x20-\x7e]/g, "?").slice(0, 200)
+          : undefined,
         headers: Object.entries(res.getHeaders()).map(([name, value]) => [name, Array.isArray(value) ? value.join(", ") : String(value)]),
       }));
       return res;
@@ -178,6 +182,35 @@ test("dynamic registration rejects a redirect_uri outside the allowlist", async 
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ redirect_uris: ["https://evil.example/steal"], client_name: "Kẻ lạ" }),
   });
-  assert.ok(response.status >= 400, `phải từ chối, nhận ${response.status}`);
+  // Phải là 400 + mã lỗi OAuth, KHÔNG phải 500: client thật gặp 500 sẽ tưởng máy chủ hỏng
+  // rồi thử lại mãi, thay vì đọc lỗi và sửa redirect_uri của nó.
+  assert.equal(response.status, 400, `phải trả 400, nhận ${response.status}`);
+  const body = await response.json();
+  assert.equal(body.error, "invalid_client_metadata", `mã lỗi sai: ${JSON.stringify(body)}`);
+  assert.ok(String(body.error_description || "").includes("evil.example"),
+    "lỗi phải nói rõ redirect_uri nào bị từ chối");
   assert.equal(upstreamRequests.length, before, "không được gọi Keycloak khi redirect_uri không hợp lệ");
+});
+
+test("dynamic registration rejects http on a non-localhost host", async () => {
+  const before = upstreamRequests.length;
+  const response = await appFetch(`${PUBLIC_URL}/register`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ redirect_uris: ["http://claude.ai/api/mcp/auth_callback"], client_name: "Kẻ lạ http" }),
+  });
+  assert.equal(response.status, 400, `phải trả 400, nhận ${response.status}`);
+  assert.equal((await response.json()).error, "invalid_client_metadata");
+  assert.equal(upstreamRequests.length, before, "không được gọi Keycloak khi redirect_uri dùng http");
+});
+
+test("dynamic registration rejects an empty redirect_uris", async () => {
+  const before = upstreamRequests.length;
+  const response = await appFetch(`${PUBLIC_URL}/register`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ redirect_uris: [], client_name: "Rỗng" }),
+  });
+  assert.ok(response.status >= 400 && response.status < 500, `phải là lỗi 4xx, nhận ${response.status}`);
+  assert.equal(upstreamRequests.length, before, "không được gọi Keycloak khi thiếu redirect_uris");
 });
