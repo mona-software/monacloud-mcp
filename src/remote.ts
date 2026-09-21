@@ -125,6 +125,18 @@ export async function createRemoteServer(options: RemoteServerOptions): Promise<
 
   const registrationUrl = `${issuer}/clients-registrations/openid-connect`;
   const callbackUrl = `${publicUrl}/callback`;
+  // Nơi được phép nhận code sau khi đăng nhập. Client MCP thật chỉ nằm ở mấy chỗ này; ai khai redirect_uri
+  // ngoài danh sách thì proxy từ chối ngay từ bước đăng ký, khỏi cần người dùng tự nhận ra mình bị lừa.
+  const REDIRECT_ALLOW_HOSTS = (options.env?.MCP_REMOTE_REDIRECT_HOSTS || process.env.MCP_REMOTE_REDIRECT_HOSTS
+    || "claude.ai,claude.com,anthropic.com,server.smithery.ai,smithery.ai,connect.smithery.ai,cursor.com,cursor.sh,chatgpt.com,openai.com,localhost,127.0.0.1,[::1]")
+    .split(",").map((host) => host.trim().toLowerCase()).filter(Boolean);
+  function redirectAllowed(uri: string): boolean {
+    let parsed: URL;
+    try { parsed = new URL(uri); } catch { return false; }
+    const host = parsed.hostname.toLowerCase();
+    if (parsed.protocol !== "https:" && host !== "localhost" && host !== "127.0.0.1" && host !== "[::1]") return false;
+    return REDIRECT_ALLOW_HOSTS.some((allowed) => host === allowed || host.endsWith(`.${allowed}`));
+  }
   // authorize → Keycloak → /callback (proxy) → client: Keycloak gắn `iss=<issuer Keycloak>` vào response; client (Smithery, Claude)
   // so iss với issuer của proxy → lệch → fail. Proxy nhận code ở /callback rồi phát code riêng cho client.
   interface PendingAuth { clientId: string; redirectUri: string; state?: string; createdAt: number }
@@ -137,6 +149,11 @@ export async function createRemoteServer(options: RemoteServerOptions): Promise<
   // DCR: SDK router lo validate + rate-limit (express-rate-limit 1h/IP); registerClient đẩy sang Keycloak
   // kèm Initial Access Token (Keycloak không mở đăng ký ẩn danh) và ép public client + PKCE.
   async function registerClient(client: Record<string, unknown>): Promise<ClientInfo> {
+    const wanted = (client.redirect_uris as string[] | undefined) || [];
+    const rejected = wanted.filter((uri) => !redirectAllowed(uri));
+    if (!wanted.length || rejected.length) {
+      throw new Error(`invalid_redirect_uri: chỉ nhận redirect_uri thuộc ${REDIRECT_ALLOW_HOSTS.join(", ")} (từ chối: ${rejected.join(", ") || "rỗng"})`);
+    }
     const upstream = await fetchImpl(registrationUrl, {
       method: "POST",
       headers: {
@@ -146,8 +163,11 @@ export async function createRemoteServer(options: RemoteServerOptions): Promise<
       body: JSON.stringify({
         ...client,
         client_id: undefined,
-        // Keycloak trả code về /callback của proxy (để không lộ tham số iss của Keycloak cho client) → phải đăng ký thêm URI này.
-        redirect_uris: [...new Set([...(client.redirect_uris as string[]), callbackUrl])],
+        // CHỈ callback của proxy. Không bao giờ đẩy redirect_uri do client tự khai lên Keycloak:
+        // proxy luôn nhận code ở /callback (authorize + exchange đều dùng callbackUrl), redirect_uri của client
+        // chỉ dùng ở hop cuối trong handler /callback. Đẩy lên Keycloak = mở đường cho kẻ lạ tự đăng ký client
+        // rồi lái code về máy nó (báo cáo bảo mật 21/09/2026).
+        redirect_uris: [callbackUrl],
         grant_types: ["authorization_code", "refresh_token"],
         token_endpoint_auth_method: "none",
         scope: DCR_SCOPES.join(" "),
@@ -267,6 +287,10 @@ export async function createRemoteServer(options: RemoteServerOptions): Promise<
     pendingAuth.delete(key);
     if (!pending || now() - pending.createdAt > PENDING_TTL_MS) {
       res.status(400).json({ error: "invalid_request", error_description: "Phiên đăng nhập hết hạn hoặc không hợp lệ, hãy kết nối lại." });
+      return;
+    }
+    if (!redirectAllowed(pending.redirectUri)) {
+      res.status(400).json({ error: "invalid_request", error_description: "Địa chỉ nhận kết quả đăng nhập không nằm trong danh sách cho phép." });
       return;
     }
     const target = new URL(pending.redirectUri);

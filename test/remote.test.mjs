@@ -137,7 +137,7 @@ test("Streamable HTTP initializes and lists at least 100 tools", async () => {
 });
 
 test("dynamic registration adds the Keycloak initial access token", async () => {
-  const redirectUris = ["https://client.example/callback"];
+  const redirectUris = ["https://claude.ai/api/mcp/auth_callback"];  // phải thuộc allowlist host (vá bảo mật 21/09)
   const response = await appFetch(`${PUBLIC_URL}/register`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -147,7 +147,7 @@ test("dynamic registration adds the Keycloak initial access token", async () => 
   assert.equal(upstreamRequests.length, 1);
   assert.equal(upstreamRequests[0].init.headers.authorization, "Bearer initial-secret");
   const forwarded = JSON.parse(upstreamRequests[0].init.body);
-  assert.deepEqual(forwarded.redirect_uris, [...redirectUris, "https://mcp.monacloud.vn/callback"]);
+  assert.deepEqual(forwarded.redirect_uris, ["https://mcp.monacloud.vn/callback"]);  // KHÔNG đẩy redirect_uri của client lên Keycloak
   assert.deepEqual(forwarded.grant_types, ["authorization_code", "refresh_token"]);
   assert.equal(forwarded.token_endpoint_auth_method, "none");
   assert.equal(forwarded.scope, "profile email roles basic offline_access vibecloud-api billing-api");
@@ -169,4 +169,15 @@ test("each MONA Pass user gets an isolated MONACLOUD_CONFIG_DIR (no shared links
   assert.notEqual(seen[0], seen[1]);
   assert.ok(seen[0].endsWith("/users/sub-a") && seen[1].endsWith("/users/sub-b"));
   await isolated.close();
+});
+
+test("dynamic registration rejects a redirect_uri outside the allowlist", async () => {
+  const before = upstreamRequests.length;
+  const response = await appFetch(`${PUBLIC_URL}/register`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ redirect_uris: ["https://evil.example/steal"], client_name: "Kẻ lạ" }),
+  });
+  assert.ok(response.status >= 400, `phải từ chối, nhận ${response.status}`);
+  assert.equal(upstreamRequests.length, before, "không được gọi Keycloak khi redirect_uri không hợp lệ");
 });
