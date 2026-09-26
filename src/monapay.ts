@@ -38,6 +38,8 @@ export function toolAnnotationsForName(name: string): ToolAnnotations {
     || canonical === 'mail_plans'
     || canonical === 'cloud_invoice_pdf'
     || canonical === 'cloud_base_credentials'
+    || canonical === 'cloud_affiliate_link'
+    || canonical === 'cloud_affiliate_stats'
     || canonical === 'mail_inbox_message'
     || canonical === 'mail_inbox_messages'
     || canonical === 'monapay_me'

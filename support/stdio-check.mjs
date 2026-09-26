@@ -72,7 +72,7 @@ try {
   await client.connect(transport);
   const listed = await client.listTools();
   const names = listed.tools.map((tool) => tool.name);
-  assert.equal(names.length, 180); // 19/09 tối: +cloud_domain_tld_groups, cloud_domain_tlds, cloud_domain_suggest (782 đuôi giá thật)
+  assert.equal(names.length, 186); // 26/09: +3 tool affiliate + 3 alias; 19/09 tối: +cloud_domain_tld_groups, cloud_domain_tlds, cloud_domain_suggest (782 đuôi giá thật)
   for (const name of [
     'cloud_whoami', 'cloud_balance', 'cloud_topup', 'cloud_services',
     'cloud_domain_tld_groups', 'cloud_domain_tlds', 'cloud_domain_suggest',

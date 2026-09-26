@@ -109,6 +109,9 @@ Tên tool dùng `snake_case` để giữ tương thích với prompt MONA Pay c�
 | `cloud_budget_set` / `cloud_budget_get` | Đặt và đọc budget theo product/project/token |
 | `cloud_token_limit` | Đặt spend limit cho PAT/token |
 | `cloud_open_console` | Trả URL console chung |
+| `cloud_affiliate_link` | Lấy mã, link giới thiệu, hạng và mức chia sẻ doanh thu; chỉ đăng sau khi người dùng duyệt và có disclosure |
+| `cloud_affiliate_stats` | Đọc thống kê, số dư có thể nhận và tối đa 100 hoa hồng gần nhất |
+| `cloud_affiliate_claim(code)` | Gắn mã giới thiệu vào tài khoản còn trong thời hạn nhận mã |
 
 ### MONA Pay
 

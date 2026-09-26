@@ -19,6 +19,7 @@ import { APP_FLOW, createVps, registerComputeTools } from './compute.js';
 import { pollJob } from './jobs.js';
 import { registerBaseTools } from './base.js';
 import { registerDomainTools } from './domains.js';
+import { registerAffiliateTools } from './affiliate.js';
 import { presentTopup } from './qr.js';
 
 export type ServerDependencies = {
@@ -403,6 +404,7 @@ export function createServer(dependencies: ServerDependencies = {}): McpServer {
   registerBaseTools(server, clients);
   registerMailTools(server, clients, config);
   registerDomainTools(server, clients);
+  registerAffiliateTools(server, clients);
 
   server.registerTool('agent_templates_list', {
     annotations: toolAnnotationsForName('agent_templates_list'),

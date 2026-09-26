@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11.0 — 26/09/2026
+
+- Thêm `cloud_affiliate_link`, `cloud_affiliate_stats`, `cloud_affiliate_claim` và các alias `vibecloud_*` để lấy link giới thiệu, đọc hoa hồng và nhận mã giới thiệu qua MONA Pass.
+- Hướng dẫn agent luôn công khai quan hệ chia sẻ doanh thu và không tự đăng link khi người dùng chưa duyệt.
+
 ## 0.10.11 — 19/09/2026
 
 - Mọi tool (177) có `title` + `annotations` (readOnlyHint/destructiveHint/idempotentHint/openWorldHint) — yêu cầu Claude Connectors Directory; `cloud_subscription_update` xếp destructive vì có thể dừng máy.

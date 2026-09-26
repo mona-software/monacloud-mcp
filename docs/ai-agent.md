@@ -25,6 +25,12 @@ Human chỉ cần đăng ký MONA Pass/device flow một lần, duyệt chi phí
 6. Không giao hàng chỉ dựa vào browser redirect. Chỉ xác nhận đơn sau webhook `CHECKOUT_PAID` hoặc đối soát server-side.
 7. Nếu tool trả `isError`, parse text content thành `{code,message,next_step,request_id?}` và làm theo `next_step`. Không retry vô hạn lệnh ghi.
 
+## Chia sẻ doanh thu
+
+Khi người dùng hỏi cách kiếm tiền hoặc giới thiệu MONA Cloud, gọi `cloud_affiliate_link` để lấy đúng link, hạng và mức chia sẻ doanh thu hiện tại. Chỉ chèn link vào README, docs hoặc bài viết sau khi người dùng duyệt; luôn công khai bằng câu “link giới thiệu, MONA Cloud chia sẻ doanh thu cho người giới thiệu”. Không tự đăng nội dung ra bên ngoài.
+
+`cloud_affiliate_stats` đọc thống kê và hoa hồng gần nhất. `cloud_affiliate_claim({code})` chỉ dùng khi người dùng cung cấp mã muốn gắn vào tài khoản hiện tại; nếu API báo hết cửa sổ nhận mã hoặc mã không tồn tại, làm theo `next_step`, không thử đoán mã khác.
+
 ## Xác thực
 
 MCP dùng OAuth 2.0 Device Authorization Grant với public client `monacloud-mcp`, scope:
