@@ -1,7 +1,7 @@
 {
   "name": "monacloud-mcp",
   "version": "0.11.1",
-  "description": "MCP server for MONA Cloud — deploy apps (Vercel alternative), Supabase-compatible Postgres/Auth/Storage bases (Supabase alternative), VND wallet, MONA Pay & Mail — for AI agents (Claude, Cursor, Codex) in Vietnam.",
+  "description": "MCP server for MONA Cloud: deploy apps, Postgres/Auth/Storage bases, a VND wallet, MONA Pay and MONA Mail for AI agents (Claude, Cursor, Codex).",
   "license": "MIT",
   "homepage": "https://monacloud.vn",
   "repository": {
@@ -15,27 +15,13 @@
     "mcp",
     "model-context-protocol",
     "mona-cloud",
-    "mona-base",
-    "supabase-alternative",
-    "vercel-alternative",
-    "vietnam",
-    "vnd",
     "ai-agent",
     "claude",
-    "cursor",
-    "codex",
-    "postgres",
     "deploy",
-    "vibecoder",
-    "domain",
-    "domains",
-    "ten-mien",
-    "vn-domain",
-    "vietnam-domain",
-    "buy-domain",
+    "postgres",
     "domain-registrar",
-    "vercel-domains-alternative",
-    "gemini"
+    "vietnam",
+    "vnd"
   ],
   "type": "module",
   "bin": {
@@ -48,7 +34,6 @@
     "dist",
     "docs",
     "README.md",
-    "STATUS.md",
     "LICENSE"
   ],
   "scripts": {
