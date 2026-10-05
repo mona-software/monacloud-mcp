@@ -6,7 +6,7 @@ Repo: thư mục hiện tại (~/monacloud/mcp). Chỉ ghi các file nêu dướ
 1. Tạo `mcpb/manifest.json` theo MCPB spec (https://github.com/modelcontextprotocol/mcpb, manifest_version "0.2"):
    - name `monacloud-mcp`, display_name `MONA Cloud (monadomain)`, version lấy từ package.json (0.10.9)
    - description ≤ 200 ký tự tiếng Anh: "Buy .vn/intl domains in VND, deploy apps, Postgres, email, VietQR pay — Vietnam MCP for AI agents. Domain search & reserve work without login."
-   - author {name: "The MONA Group", url: "https://monadomain.vn"}, homepage https://monadomain.vn, documentation https://monadomain.vn/AGENTS.md, repository https://github.com/themonagroup/monacloud-mcp, license MIT
+   - author {name: "The MONA Group", url: "https://monadomain.vn"}, homepage https://monadomain.vn, documentation https://monadomain.vn/AGENTS.md, repository https://github.com/mona-software/monacloud-mcp, license MIT
    - server: type "node", entry_point "dist/index.js", mcp_config {command: "node", args: ["${__dirname}/dist/index.js"], env: {MONACLOUD_TOKEN: "${user_config.monacloud_token}"}}
    - user_config: monacloud_token {type string, title "MONA Pass token", description "Optional. Not needed for domain search/reserve; run `npx monacloud-mcp login` to buy, deploy and pay.", sensitive true, required false}
    - keywords: mcp, domain, vn, vietnam, monadomain, monacloud, deploy, vietqr

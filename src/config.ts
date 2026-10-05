@@ -21,7 +21,7 @@ export type Config = {
 
 const cleanBaseUrl = (value: string) => value.replace(/\/+$/, '');
 
-export const DEFAULT_TEMPLATES_URL = 'https://raw.githubusercontent.com/themonagroup/mona-agent-templates/main';
+export const DEFAULT_TEMPLATES_URL = 'https://raw.githubusercontent.com/mona-software/mona-agent-templates/main';
 
 export function readConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const configDir = env.MONACLOUD_CONFIG_DIR

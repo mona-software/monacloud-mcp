@@ -13,7 +13,7 @@ Portal: https://claude.ai/admin-settings/directory/submissions/new — **cần t
 - Description (≤2000, tiếng Anh):
   MONA Cloud gives Claude the tools Vietnamese builders need to ship a product end to end. Search and buy .vn and 370+ international domains priced in VND with VAT, reserve a name for 30 minutes and pay by VietQR from any Vietnamese banking app, then point DNS and SSL at your app. Deploy the app you are working on to MONA Cloud (a Vercel-style host billed in VND), create Postgres, Auth and Storage bases (a Supabase-style backend), send transactional email with MONA Mail, and accept bank-transfer payments with MONA Pay, all from one MONA Pass account and one VND wallet. When the wallet runs low, Claude shows a VietQR code; you scan it and continue. MONA Cloud is operated by The MONA Group (Vietnam, since 2016, 14,000+ projects). Domain search and quotes work before you sign in; buying, deploying and paying use your MONA Pass login.
 - Categories: Developer Tools · Cloud & Infrastructure · Domains/Hosting · Payments (chọn 1–5 theo danh mục portal)
-- Documentation URL: https://monacloud.vn/docs/mcp-va-sdk (thêm: https://monadomain.vn/docs, https://github.com/themonagroup/monacloud-mcp/blob/main/docs/remote.md)
+- Documentation URL: https://monacloud.vn/docs/mcp-va-sdk (thêm: https://monadomain.vn/docs, https://github.com/mona-software/monacloud-mcp/blob/main/docs/remote.md)
 - Privacy policy URL: https://monacloud.vn/en/privacy
 - Support contact: info@themona.global · hotline 1900 636 648
 - Icon: `~/mona-hub/brand/mona/monacloud/fav-monacloud.svg` (PNG 512: https://monadomain.vn/icon-512.png)

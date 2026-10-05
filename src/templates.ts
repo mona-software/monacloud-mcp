@@ -128,7 +128,7 @@ export class TemplateCatalog {
       } catch (error) {
         const builtin = BUILTIN.find((entry) => entry.slug === slug);
         if (!builtin) {
-          throw new CloudError('template_not_found', `Không đọc được template ${slug} từ catalog công khai (${(error as Error).message}).`, 'Kiểm mạng hoặc gọi agent_templates_list; catalog: https://github.com/themonagroup/mona-agent-templates');
+          throw new CloudError('template_not_found', `Không đọc được template ${slug} từ catalog công khai (${(error as Error).message}).`, 'Kiểm mạng hoặc gọi agent_templates_list; catalog: https://github.com/mona-software/mona-agent-templates');
         }
         return { ...builtin, source: `built-in-wave-1-catalog (remote không đọc được)`, status: 'catalog_only' };
       }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.1 — 05/10/2026
+
+- Sửa các tool `agent_templates_*` bị lỗi: địa chỉ tải template mặc định chuyển từ `raw.githubusercontent.com/themonagroup/mona-agent-templates` sang `mona-software`.
+- Đổi link repo, homepage và issue sang `github.com/mona-software` vì org cũ `themonagroup` đã bị GitHub khoá, mọi link cũ trả 404.
+- Đồng bộ version trong `server.json`, `mcpb/manifest.json` và `package-lock.json` (đang lệch ở 0.10.12 và 0.10.10) về đúng version package.
+
 ## 0.11.0 — 26/09/2026
 
 - Thêm `cloud_affiliate_link`, `cloud_affiliate_stats`, `cloud_affiliate_claim` và các alias `vibecloud_*` để lấy link giới thiệu, đọc hoa hồng và nhận mã giới thiệu qua MONA Pass.

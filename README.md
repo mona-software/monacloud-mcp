@@ -338,3 +338,5 @@ Monthly bỏ qua CPU/RAM/đĩa và package_slug, đọc cấu hình/giá từ pl
 Khi user nói “deploy repo”, đọc host; chưa có host thì sandbox `cloud_app_create` để ước tính, hỏi duyệt rồi tạo thật và kiểm URL. Tool chờ job tối đa 600 giây; dùng `wait:false` và `cloud_job_status` nếu host MCP có timeout ngắn. Endpoint Wave B đang mở, lỗi API được báo thật.
 
 Hợp đồng HTTP, đầy đủ tham số, ví dụ billing/deploy, PDF và giới hạn rollout: [docs/wave-ab.md](docs/wave-ab.md).
+
+**MONA Cloud MCP thuộc bộ MONA Cloud của The MONA Group.**
