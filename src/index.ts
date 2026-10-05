@@ -3,7 +3,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { AuthManager } from './auth.js';
 import { readConfig } from './config.js';
 import { toAgentError } from './errors.js';
-import { createServer } from './server.js';
+import { createServer, PKG_VERSION } from './server.js';
 
 const command = process.argv[2];
 const config = readConfig();
@@ -24,7 +24,7 @@ async function main(): Promise<void> {
     return;
   }
   if (command === '--version' || command === '-v') {
-    console.log('0.5.0');
+    console.log(PKG_VERSION);
     return;
   }
   if (command === '--help' || command === '-h' || command === 'help') {
