@@ -48,7 +48,7 @@ export async function createVps(clients: CloudClients, body: Row) {
   } : {}) };
 }
 
-export function registerComputeTools(server: McpServer, clients: CloudClients) {
+export function registerComputeTools(server: McpServer, clients: CloudClients, remote = false) {
   // Every new compute tool keeps a mechanical legacy alias, using the same schema and handler.
   const register = (name: string, description: string, schema: z.ZodObject<any>, handler: (args: any) => unknown) => {
     for (const toolName of [name, name.replace(/^cloud_/, 'vibecloud_')]) {
@@ -98,12 +98,16 @@ export function registerComputeTools(server: McpServer, clients: CloudClients) {
   };
   const localDir = z.string().min(1).max(4096).refine((value) => value.trim().length > 0 && !/[\x00-\x1f]/.test(value), 'local_dir không hợp lệ.');
   const local = localAppTools(clients);
-  register('cloud_app_detect', 'Nhận diện Node/Next/Vite/Python/PHP/static, port, start, Dockerfile, build_type và tên biến .env.example; hoàn toàn offline, không thực thi code dự án. / Detect a local app without network.',
+  // 28/10/2026 Mythos: MCP từ xa không được đọc path trên container theo input của khách.
+  if (!remote) register('cloud_app_detect', 'Nhận diện Node/Next/Vite/Python/PHP/static, port, start, Dockerfile, build_type và tên biến .env.example; hoàn toàn offline, không thực thi code dự án. / Detect a local app without network.',
     z.object({ local_dir: localDir }).strict(), ({ local_dir }) => detectProject(local_dir));
-  register('cloud_app_create', appNotice + APP_FLOW,
-    z.object({ local_dir: localDir.optional(), name: z.string().trim().min(1).max(80).optional(), repo_url: repo.optional(), branch: gitPath.optional(), build_type: z.enum(['dockerfile', 'nixpacks', 'static']).optional(), dockerfile: gitPath.optional(), env: env.default({}), domain: domain.optional(), app_host_id: id.optional(), port: z.number().int().min(1).max(65535).optional(), sandbox, ...poll }).strict()
+  const remoteNotice = 'Bản từ xa chỉ deploy từ git; muốn upload thư mục máy mình thì dùng MCP local (npx). ';
+  const createSchema = remote
+    ? z.object({ name: z.string().trim().min(1).max(80).optional(), repo_url: repo, branch: gitPath.optional(), build_type: z.enum(['dockerfile', 'nixpacks', 'static']).optional(), dockerfile: gitPath.optional(), env: env.default({}), domain: domain.optional(), app_host_id: id.optional(), port: z.number().int().min(1).max(65535).optional(), sandbox, ...poll }).strict()
+    : z.object({ local_dir: localDir.optional(), name: z.string().trim().min(1).max(80).optional(), repo_url: repo.optional(), branch: gitPath.optional(), build_type: z.enum(['dockerfile', 'nixpacks', 'static']).optional(), dockerfile: gitPath.optional(), env: env.default({}), domain: domain.optional(), app_host_id: id.optional(), port: z.number().int().min(1).max(65535).optional(), sandbox, ...poll }).strict()
       .refine((args) => Boolean(args.local_dir) !== Boolean(args.repo_url), 'Chọn đúng một local_dir hoặc repo_url.')
-      .refine((args) => !args.local_dir || (!args.branch && (!args.dockerfile || args.dockerfile === 'Dockerfile')), 'Upload local dùng Dockerfile ở root (hoặc Nixpacks tự nhận); branch/app_host_id chỉ dùng cho git.'),
+      .refine((args) => !args.local_dir || (!args.branch && (!args.dockerfile || args.dockerfile === 'Dockerfile')), 'Upload local dùng Dockerfile ở root (hoặc Nixpacks tự nhận); branch/app_host_id chỉ dùng cho git.');
+  register('cloud_app_create', appNotice + (remote ? remoteNotice : APP_FLOW), createSchema,
     async (args) => {
       if (args.local_dir) return local.create(args);
       const { sandbox: requested, wait, interval_sec, timeout_sec, local_dir, name, ...fields } = args;
@@ -113,7 +117,7 @@ export function registerComputeTools(server: McpServer, clients: CloudClients) {
   register('cloud_app_list', appNotice + 'Liệt kê app trước khi tạo để tránh trùng. / List apps.', z.object({ sandbox }).strict(), ({ sandbox }) => compute('/api/apps', {}, sandbox));
   register('cloud_app_host_list', appNotice + 'Đọc app host; chưa có host thì sandbox cloud_app_create trước để ước tính. / List app hosts.', z.object({ sandbox }).strict(), ({ sandbox }) => compute('/api/app-hosts', {}, sandbox));
   register('cloud_app_get', appNotice + 'Đọc status, URL, lần deploy và app host. / Inspect app.', appId, ({ app_id, sandbox }) => compute(`/api/apps/${encodeURIComponent(app_id)}`, {}, sandbox));
-  register('cloud_app_deploy', appNotice + 'App upload: local_dir đóng ZIP mới → upload → chờ job → deploy; bỏ local_dir để redeploy bản đã upload. / Redeploy uploaded source or a git app and poll.', appId.extend({ local_dir: localDir.optional(), ...poll }),
+  register('cloud_app_deploy', appNotice + (remote ? remoteNotice : 'App upload: local_dir đóng ZIP mới → upload → chờ job → deploy; bỏ local_dir để redeploy bản đã upload. / Redeploy uploaded source or a git app and poll.'), remote ? appId.extend({ ...poll }) : appId.extend({ local_dir: localDir.optional(), ...poll }),
     async (args) => args.local_dir ? local.deploy(args) : finishAppJob(clients,
       await clients.guardedVibecloud(`/api/apps/${encodeURIComponent(args.app_id)}/deploy`, { method: 'POST' }, args.sandbox), clients.sandboxEnabled(args.sandbox), args.wait, args.interval_sec, args.timeout_sec));
   register('cloud_app_env_set', appNotice + 'Thay toàn bộ env sau khi được duyệt, gửi đầy đủ map cần giữ; không log secret. Gọi cloud_app_deploy sau đó để áp dụng. / Set app environment.', appId.extend({ env }), ({ app_id, env, sandbox }) => compute(`/api/apps/${encodeURIComponent(app_id)}/env`, { method: 'PUT', body: { env } }, sandbox));

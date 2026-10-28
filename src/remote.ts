@@ -16,6 +16,13 @@ const SCOPES = ["openid", "profile", "email", "offline_access", "vibecloud-api",
 const DCR_SCOPES = ["profile", "email", "roles", "basic", "offline_access", "vibecloud-api", "billing-api"];
 const IDLE_TTL_MS = 30 * 60_000;
 const MAX_SESSIONS = 2_000;
+const SESSION_ENV_KEYS = [
+  "MONACLOUD_ISSUER", "MONACLOUD_BILLING_URL", "MONAPAY_API", "MONAPAY_BASE_URL",
+  "MONAMAIL_API", "MONACLOUD_API", "VIBECLOUD_API", "VIBECLOUD_API_URL",
+  "MONACLOUD_CONSOLE_URL", "MONACLOUD_CLIENT_ID", "MONACLOUD_SCOPE",
+  "MONACLOUD_TEMPLATES_DIR", "MONACLOUD_TEMPLATES_URL", "MONAPAY_LINK_PATH",
+  "VIBECLOUD_LINK_PATH",
+] as const;
 
 interface OAuthDiscovery {
   authorization_endpoint: string;
@@ -252,7 +259,7 @@ export async function createRemoteServer(options: RemoteServerOptions): Promise<
   });
 
   const app = express();
-  app.set("trust proxy", "loopback"); // sau nginx: req.ip = IP thật của khách
+  app.set("trust proxy", "loopback, uniquelocal"); // 28/10/2026 Mythos: tin nginx qua cầu Docker 172.x
   app.use(cors({
     origin: true,
     allowedHeaders: ["Authorization", "Mcp-Session-Id", "Content-Type"],
@@ -427,8 +434,13 @@ export async function createRemoteServer(options: RemoteServerOptions): Promise<
     // ~/.config/monacloud của tiến trình (nếu dùng chung, credential MONA Pay của người này lọt sang phiên người khác).
     const userDir = join(options.dataDir ?? mkdtempSync(join(tmpdir(), "mcp-remote-")), "users", auth.extra.sub.replace(/[^a-zA-Z0-9_-]/g, "_"));
     mkdirSync(userDir, { recursive: true, mode: 0o700 });
-    const env: NodeJS.ProcessEnv = { ...process.env, ...options.env, MONACLOUD_TOKEN: auth.token, MONACLOUD_CONFIG_DIR: userDir };
-    const server = createServer({ env });
+    // 28/10/2026 Mythos: chỉ truyền cấu hình cần thiết, không để secret tiến trình lọt vào phiên khách.
+    const env: NodeJS.ProcessEnv = { MONACLOUD_TOKEN: auth.token, MONACLOUD_CONFIG_DIR: userDir };
+    for (const key of SESSION_ENV_KEYS) {
+      const value = options.env?.[key] ?? process.env[key];
+      if (value !== undefined) env[key] = value;
+    }
+    const server = createServer({ env, remote: true });
     await server.connect(transport);
     await transport.handleRequest(req as never, res as never, req.body);
     if (pendingSessionId) {
