@@ -159,20 +159,37 @@ test("dynamic registration adds the Keycloak initial access token", async () => 
 
 test("each MONA Pass user gets an isolated MONACLOUD_CONFIG_DIR (no shared links.json)", async () => {
   const seen = [];
+  const oldInitialToken = process.env.MONA_PASS_INITIAL_ACCESS_TOKEN;
+  process.env.MONA_PASS_INITIAL_ACCESS_TOKEN = "x";
   const isolated = await createRemoteServer({
     publicUrl: PUBLIC_URL, issuer: ISSUER, initialAccessToken: "initial-secret", fetch: mockFetch,
+    env: { MONACLOUD_API: "https://compute.session.test" },
     verifyAccessToken: async (token) => ({ token, clientId: "c", scopes: [], expiresAt: Math.floor(Date.now() / 1000) + 600, extra: { sub: token === "user-a" ? "sub-a" : "sub-b" } }),
-    createServer: (deps) => { seen.push(deps.env.MONACLOUD_CONFIG_DIR); return remoteTestServer(deps); },
+    createServer: (deps) => { seen.push(deps); return remoteTestServer(deps); },
   });
-  const fetchIsolated = (input, init) => appFetchFor(isolated.app, input, init);
-  for (const token of ["user-a", "user-b"]) {
-    await fetchIsolated(`${PUBLIC_URL}/mcp`, { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json", accept: "application/json, text/event-stream" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "t", version: "1" } } }) });
+  try {
+    const fetchIsolated = (input, init) => appFetchFor(isolated.app, input, init);
+    for (const token of ["user-a", "user-b"]) {
+      await fetchIsolated(`${PUBLIC_URL}/mcp`, { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json", accept: "application/json, text/event-stream" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "t", version: "1" } } }) });
+    }
+    assert.equal(seen.length, 2);
+    assert.notEqual(seen[0].env.MONACLOUD_CONFIG_DIR, seen[1].env.MONACLOUD_CONFIG_DIR);
+    assert.ok(seen[0].env.MONACLOUD_CONFIG_DIR.endsWith("/users/sub-a") && seen[1].env.MONACLOUD_CONFIG_DIR.endsWith("/users/sub-b"));
+    for (const deps of seen) {
+      assert.equal(deps.remote, true);
+      assert.equal(deps.env.MONA_PASS_INITIAL_ACCESS_TOKEN, undefined);
+      assert.equal(deps.env.MONACLOUD_API, "https://compute.session.test");
+    }
+  } finally {
+    if (oldInitialToken === undefined) delete process.env.MONA_PASS_INITIAL_ACCESS_TOKEN;
+    else process.env.MONA_PASS_INITIAL_ACCESS_TOKEN = oldInitialToken;
+    await isolated.close();
   }
-  assert.equal(seen.length, 2);
-  assert.notEqual(seen[0], seen[1]);
-  assert.ok(seen[0].endsWith("/users/sub-a") && seen[1].endsWith("/users/sub-b"));
-  await isolated.close();
+});
+
+test("remote trusts loopback and Docker private proxies", () => {
+  assert.equal(remote.app.get("trust proxy"), "loopback, uniquelocal");
 });
 
 test("dynamic registration rejects a redirect_uri outside the allowlist", async () => {

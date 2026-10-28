@@ -1,0 +1,12 @@
+# BRIEF Codex lane MCP: MCP từ xa (mcp.monacloud.vn) đóng ZIP thư mục ngay trên server — NGUY HIỂM (rà Mythos 28/10/2026)
+
+Thư mục làm việc: thư mục này (worktree nhánh `fix/bao-mat-remote-2810` của repo mcp). Chỉ sửa file ghi dưới + test. Không commit, không push, không deploy, không đổi dependency. Comment tiếng Việt ngắn «28/10/2026 Mythos». Test: `npm test` (build + node test). Xong ghi `handoff/KET-QUA-mcp.md`.
+
+Lỗ: `src/remote.ts:430-431` tạo server MCP cho mỗi người dùng bằng `createServer({ env })` dùng chung với bản chạy local, nên tool `cloud_app_detect(local_dir)`, `cloud_app_create(local_dir)`, `cloud_app_deploy(local_dir)` (`src/compute.ts:99-117`, `src/local.ts`) đọc thư mục TRÊN CONTAINER SERVER theo đường dẫn người lạ đưa (ví dụ `/app/data/users/<sub khác>/links.json` chứa client_secret MONA Pay, `/proc/self/environ` chứa `MONA_PASS_INITIAL_ACCESS_TOKEN`), đóng ZIP rồi deploy thành app static công khai. Thêm nữa env của phiên là `{...process.env}` nên mọi phiên mang `MONA_PASS_INITIAL_ACCESS_TOKEN`.
+
+Sửa:
+1. `src/server.ts` `createServer(options)`: thêm `remote?: boolean`. Truyền xuống nơi đăng ký tool compute (`src/compute.ts`) và bất kỳ module nào đọc filesystem theo đường dẫn người dùng (grep `local_dir`, `readdir`, `readFile` trong `src/*.ts`, kể cả template/scaffold nếu có).
+2. Khi `remote === true`: KHÔNG đăng ký `cloud_app_detect`; schema `cloud_app_create` không có `local_dir` (bắt buộc `repo_url`); `cloud_app_deploy` không có `local_dir`. Mô tả tool ghi «Bản từ xa chỉ deploy từ git; muốn upload thư mục máy mình thì dùng MCP local (npx)».
+3. `src/remote.ts:430`: env phiên chỉ gồm whitelist các biến `createServer` thật sự cần (xem `src/config.ts` đọc biến nào: issuer, API base, v.v.), cộng `MONACLOUD_TOKEN`, `MONACLOUD_CONFIG_DIR`. Tuyệt đối không truyền `MONA_PASS_INITIAL_ACCESS_TOKEN`, không spread `process.env`.
+4. `src/remote.ts:255` `app.set("trust proxy", "loopback, uniquelocal")` để rate-limit `/register` đếm đúng IP khách khi nginx vào qua cầu docker 172.x.
+5. Test `test/remote.test.mjs` (hoặc file mới `test/remote-tools.test.mjs`): server tạo với `remote: true` không có tool `cloud_app_detect`, schema `cloud_app_create` không có thuộc tính `local_dir`; server local vẫn có. Test env whitelist: đặt `process.env.MONA_PASS_INITIAL_ACCESS_TOKEN='x'` rồi tạo phiên remote, env truyền vào không có khoá đó (xem cách test hiện mock `createServer` qua `options.createServer`).

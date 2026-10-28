@@ -26,6 +26,7 @@ export type ServerDependencies = {
   config?: Config;
   env?: NodeJS.ProcessEnv;
   fetchImpl?: typeof fetch;
+  remote?: boolean;
 };
 
 type JsonObject = Record<string, unknown>;
@@ -400,7 +401,7 @@ export function createServer(dependencies: ServerDependencies = {}): McpServer {
     inputSchema: { template: z.string().regex(/^[a-z0-9][a-z0-9-]{0,79}$/), sandbox: sandboxSchema },
   }, ({ template, sandbox }) => runTool(() => agentRuntimeStub(template, clients.sandboxEnabled(sandbox))));
 
-  registerComputeTools(server, clients);
+  registerComputeTools(server, clients, dependencies.remote === true);
   registerBaseTools(server, clients);
   registerMailTools(server, clients, config);
   registerDomainTools(server, clients);
